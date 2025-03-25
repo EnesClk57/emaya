@@ -1,76 +1,63 @@
-import 'package:emaya/src/features/categorie/domain/entities/categorie_entity.dart';
-import 'package:emaya/src/features/categorie/domain/repositories/categorie_repository.dart';
+import 'package:emaya/src/features/categorie/data/models/categorie.dart';
+import 'package:emaya/src/features/categorie/domain/service/categorie_service.dart';
+import 'package:emaya/src/features/categorie/presentation/widgets/categorie_widget.dart';
 import 'package:flutter/material.dart';
-import 'package:emaya/src/features/categorie/data/repositories/categorie_repository_fake.dart';
 
-class CategoriesPage extends StatelessWidget {
+
+class CategoriesPage extends StatefulWidget {
   const CategoriesPage({super.key});
+
+
+  @override
+  State<CategoriesPage> createState() => _CategoriesPageState();
+}
+
+
+class _CategoriesPageState extends State<CategoriesPage> {
+  List<Categorie>? lesCategories;
+  bool isLoaded = false;
+
+
+  @override
+void initState() {
+    super.initState();
+    loadCategories();
+  }
+
+
+  Future<void> loadCategories() async {
+    final categorieService = CategorieService();
+    lesCategories = await categorieService.getAllCategories();
+    setState(() {
+      isLoaded = true;
+    });
+  }
+
 
   @override
   Widget build(BuildContext context) {
-    double screenWidth = MediaQuery.of(context).size.width;
+
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Catégories'),
       ),
-      body: Padding(
-        // Padding : const EdgeInsets.all(8.0)
-        padding: const EdgeInsets.all(8.0),
-        child: GridView.builder(
-          // créer gridView avec 2 catégories par ligne et 8 catégories au total
-          itemCount: 8,
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 2, // 2 catégories par ligne
-            mainAxisSpacing: 10, // espacement vertical
-            crossAxisSpacing: 10, // espacement horizontal
-            childAspectRatio: 300 / 250, // ratio largeur/hauteur
-          ),
-          itemBuilder: (_, int index) {
-            CategorieEntityFake laCategorie =
-                CategorieRepositoryFake.getCategorie(index); // récupérer la catégorie
-            return InkWell(
-              onTap: () {
-                // Action à définir
-              },
-              onLongPress: () {
-                // Action à définir
-              },
-              child: Container(
-                decoration: BoxDecoration(
-                  // Appliquer la couleur avec opacité
-                  color: laCategorie.couleur.withOpacity(0.2),
-                  borderRadius: BorderRadius.circular(16), // arrondir les coins
-                  border: Border.all(
-                    color: laCategorie.couleur.withOpacity(0.7),
-                    width: 3, // épaisseur de la bordure
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    // Container pour l'image
-                    Container(
-                      height: screenWidth * 0.3, // largeur
-                      width: screenWidth * 0.3, // hauteur
-                      decoration: BoxDecoration(
-                        image: DecorationImage(
-                          image: AssetImage(
-                              'assets/images/cat/${laCategorie.imageNom}'),
-                          fit: BoxFit.fill, // ajustement de l'image
-                        ),
-                      ),
-                    ),
-                    Text(
-                      laCategorie.libelle, // texte du libellé
-                      style: Theme.of(context).textTheme.labelLarge,
-                    ),
-                  ],
+      body: isLoaded && lesCategories != null
+          ? SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.only(left: 8.0, right: 8.0),
+                child: GridView.count(
+                  crossAxisCount: 2,
+                  mainAxisSpacing: 8,
+                  crossAxisSpacing: 8,
+                  childAspectRatio: 300 / 250,
+                  children: lesCategories!.map((categorie) {
+                    return CategorieWidget(categorie: categorie, indCategorie: lesCategories!.indexOf(categorie));
+                  }).toList(),
                 ),
               ),
-            );
-          },
-        ),
-      ),
+            )
+          : const Center(child: CircularProgressIndicator()),
     );
   }
 }
